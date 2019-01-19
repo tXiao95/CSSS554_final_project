@@ -13,8 +13,8 @@ cluster_num_var <- "cluster number"
 
 rdhs::set_rdhs_config(email = email,
                       project = project,
-                      config_path = "/data/rdhs.json",
-                      cache_path = "/data/project_NGA",
+                      config_path = "rdhs.json",
+                      cache_path = "data/NGA",
                       data_frame = "data.table::data.table", 
                       global = FALSE)
 
