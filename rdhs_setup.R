@@ -7,9 +7,7 @@ setwd("C:/Users/twh42/Documents/UW_Class/CSSS_554/final_project/")
 
 email    <- "twh42@uw.edu"
 project  <- "Spatial Regression of Total Fertility Rate in Nigeria"
-#proj_dir <- "project_NGA"
 cluster_num_var <- "cluster number"
-#dir.create(proj_dir)
 
 rdhs::set_rdhs_config(email = email,
                       project = project,
@@ -23,19 +21,17 @@ rdhs::set_rdhs_config(email = email,
 # 2. Identify relevant countries
 # 3. Find all surveys that have both survey characteristics and countries
 # 4. Find the actual dataset linked to those identified surveys 
-sc    <- dhs_survey_characteristics()
+sc    <- rdhs::dhs_survey_characteristics()
 sid   <- sc[grepl("GPS", SurveyCharacteristicName), SurveyCharacteristicID]
-locs  <- dhs_countries()
-survs <- dhs_surveys(surveyCharacteristicIds = sid,
+locs  <- rdhs::dhs_countries()
+survs <- rdhs::dhs_surveys(surveyCharacteristicIds = sid, 
                      countryIds = "NG",
                      surveyYearStart = 1950)
 
 #' Pull in datasets 
-datasets <- dhs_datasets(surveyIds = survs$SurveyId, 
-                         fileFormat = "flat")
+datasets <- dhs_datasets(surveyIds = survs$SurveyId, fileFormat = "flat")
 
-datasets[, .(SurveyYear, FileType, FileName)]
-datasets[SurveyYear == 2015,  .(SurveyYear, FileType, FileName)]
+datasets15 <- datasets[SurveyYear == 2015,  .(SurveyYear, FileType, FileName)]
 
 #' Download datasets into directory
 downloads <- rdhs::get_datasets(datasets$FileName)
@@ -47,6 +43,4 @@ indiv <- readRDS(file = downloads$NGIR71FL)
 lbls <- data.table(get_variable_labels(indiv))[, description := tolower(description)]
 d <- lbls[grepl("cluster", description), variable]
 lbls[description == cluster_num_var, variable]
-
-unique(indiv$v001)
 
