@@ -2,15 +2,15 @@ library(data.table)
 library(rdhs)
 library(magrittr)
 library(ggplot2)
+library(here)
 
-setwd("C:/Users/twh42/Documents/UW_Class/CSSS_554/final_project/")
 email    <- "twh42@uw.edu"
 project  <- "Spatial Regression of Total Fertility Rate in Nigeria"
 
 rdhs::set_rdhs_config(email = email,
                       project = project,
-                      config_path = "rdhs.json",
-                      cache_path = "data/NGA",
+                      config_path = here("rdhs.json"),
+                      cache_path = here("data/NGA"),
                       data_frame = "data.table::data.table", 
                       global = FALSE)
 
@@ -23,14 +23,14 @@ sc    <- rdhs::dhs_survey_characteristics()
 sid   <- sc[grepl("GPS", SurveyCharacteristicName), SurveyCharacteristicID]
 locs  <- rdhs::dhs_countries()
 survs <- rdhs::dhs_surveys(surveyCharacteristicIds = sid, 
-                     countryIds = "NG",
-                     surveyYearStart = 1950)
+                           countryIds = "NG",
+                           surveyYearStart = 1950)
 
-#' Pull in datasets 
+#' Pull in dataset metadata
 datasets <- dhs_datasets(surveyIds = survs$SurveyId, fileFormat = "FL")
-#' Download datasets into directory
+#' Download actual survey datasets into directory
 downloads <- rdhs::get_datasets(datasets$FileName)
-readr::write_csv(datasets, "datasets.csv")
-saveRDS(downloads, file = "downloads.rds")
+readr::write_csv(datasets, here("datasets.csv"))
+saveRDS(downloads, file = here("downloads.rds"))
 
 

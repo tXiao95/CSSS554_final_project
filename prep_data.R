@@ -3,6 +3,7 @@ library(rdhs)
 library(haven)
 library(ggplot2)
 library(argparse)
+library(here)
 
 #' Take surveys I want and save to a more accessible format: convert form .rds to .csv
 #' Necessary variables
@@ -12,16 +13,9 @@ library(argparse)
 #' v005: Woman's individual sample weight
 #' awfactt: All woman factor (Only needed with ever-married samples)
 
-main <- function(recall){
-  #' @description Calculate ASFR and TFR from any sort of recall 
-  #' @param recall: Recall to caculate births in units of months
-}
-
 #' Set up and read in variables
-home_dir  <- "C:/Users/twh42/Documents/UW_Class/CSSS_554/final_project/"
-setwd(home_dir)
-downloads <- readRDS("downloads.rds")
-datasets  <- fread("datasets.csv")
+downloads <- readRDS(here("downloads.rds"))
+datasets  <- fread(here("datasets.csv"))
 
 #' Identify variables to pull from each dataset
 nec_var <- c("b3", "v011", "v008", "v005") #, "awfactt")
@@ -32,9 +26,9 @@ var_map <- data.table(short = nec_var, full = rename)
 br_dfs <- datasets[FileType == "Births Recode"]
 ir_dfs <- datasets[FileType == "Individual Recode"]
 
-br <- search_variables(br_dfs$FileName, variables = nec_var) %>%
-      extract_dhs(add_geo = T) %>%
-      rbindlist(fill = T)
+br <- rdhs::search_variables(br_dfs$FileName, variables = nec_var) %>%
+      rdhs::extract_dhs(add_geo = T) %>%
+      data.table::rbindlist(fill = T)
 
 ir <- search_variables(ir_dfs$FileName, variables = nec_var) %>%
       extract_dhs(add_geo = T) %>%
@@ -45,7 +39,7 @@ names(ir)[names(ir) %in% var_map$short] <- var_map[short %in% names(ir),full]
 
 #' Calculate how many months before the interview the birth occurred
 br[, birth_period := cmc_interview - cmc_birth]
-br[, agegroup := as.integer((cmc_birth - cmc_mom_dob) / 60)]
+br[, agegroup := as.integer((cmc_birth - cmc_mom_dob) / 60)] # age at time of birth
 br <- br[birth_period <= recall]
 
 #' Maximum number of months can spend in a single 5-yr age group: 5 * 12 = 60
