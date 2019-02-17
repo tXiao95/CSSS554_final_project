@@ -1,4 +1,3 @@
-# CSSS554_final_project
-UW Spatial Stat Final: Fertility in Nigeria
+# UW Spatial Statistical Methods
 
-Examination of TFR at the admin2 level
+Apply disease mapping or small area estimation techniques to the total fertility rate (TFR) in Nigeria, using Demographic Health Survey data from 1990 to 2015. Explore use of covariates (income, education, met need of contraception, etc.)
