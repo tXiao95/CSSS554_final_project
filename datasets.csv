@@ -1,0 +1,53 @@
+FileFormat,FileSize,DatasetType,SurveyNum,SurveyId,FileType,FileDateLastModified,SurveyYearLabel,SurveyType,SurveyYear,DHS_CountryCode,FileName,CountryName
+Flat ASCII data (.dat),29613,GPS Datasets,32,NG1990DHS,Geographic Data,"April, 21 2017 17:12:43",1990,DHS,1990,NG,NGGE23FL.zip,Nigeria
+Flat ASCII data (.dat),2864712,Survey Datasets,32,NG1990DHS,Births Recode,"May, 22 2007 11:25:10",1990,DHS,1990,NG,NGBR21FL.zip,Nigeria
+Flat ASCII data (.dat),603800,Survey Datasets,32,NG1990DHS,Household Recode,"December, 07 2004 12:29:27",1990,DHS,1990,NG,NGHR21FL.ZIP,Nigeria
+Flat ASCII data (.dat),82466,Survey Datasets,32,NG1990DHS,Height and Weight Scores - WHO Child Growth Standards,"May, 04 2009 11:02:44",1990,DHS,1990,NG,NGHW21FL.ZIP,Nigeria
+Flat ASCII data (.dat),3417114,Survey Datasets,32,NG1990DHS,Individual Recode,"December, 10 2004 12:34:36",1990,DHS,1990,NG,NGIR21FL.ZIP,Nigeria
+Flat ASCII data (.dat),1439561,Survey Datasets,32,NG1990DHS,Children's Recode,"September, 11 2006 10:38:46",1990,DHS,1990,NG,NGKR21FL.ZIP,Nigeria
+Flat ASCII data (.dat),151962,Survey Datasets,32,NG1990DHS,Service Availability Raw,"September, 11 2006 10:38:46",1990,DHS,1990,NG,NGSQ23FL.ZIP,Nigeria
+Flat ASCII data (.dat),42905,Survey Datasets,32,NG1990DHS,Wealth Index,"July, 12 2006 10:30:07",1990,DHS,1990,NG,NGWI21FL.ZIP,Nigeria
+Flat ASCII data (.dat),767082,GPS Datasets,32,NG1990DHS,Geospatial Covariates,"September, 06 2018 16:09:48",1990,DHS,1990,NG,NGGC22FL.ZIP,Nigeria
+Flat ASCII data (.dat),540437,Survey Datasets,32,NG1990DHS,Household Member Recode,"August, 07 2003 15:15:36",1990,DHS,1990,NG,NGPR21FL.ZIP,Nigeria
+Flat ASCII data (.dat),1612364,Survey Datasets,223,NG2003DHS,Household Member Recode,"June, 26 2009 13:34:20",2003,DHS,2003,NG,NGPR4CFL.ZIP,Nigeria
+Flat ASCII data (.dat),821693,Survey Datasets,223,NG2003DHS,Men's Recode,"December, 27 2006 11:35:50",2003,DHS,2003,NG,NGMR4AFL.ZIP,Nigeria
+Flat ASCII data (.dat),865179,GPS Datasets,223,NG2003DHS,Geospatial Covariates,"September, 06 2018 16:09:48",2003,DHS,2003,NG,NGGC4BFL.ZIP,Nigeria
+Flat ASCII data (.dat),3018860,Survey Datasets,223,NG2003DHS,Children's Recode,"October, 05 2005 13:06:01",2003,DHS,2003,NG,ngkr4bfl.zip,Nigeria
+Flat ASCII data (.dat),4261815,Survey Datasets,223,NG2003DHS,Individual Recode,"December, 27 2006 11:35:49",2003,DHS,2003,NG,NGIR4BFL.ZIP,Nigeria
+Flat ASCII data (.dat),68585,Survey Datasets,223,NG2003DHS,Height and Weight Scores - WHO Child Growth Standards,"May, 04 2009 11:02:45",2003,DHS,2003,NG,NGHW4BFL.ZIP,Nigeria
+Flat ASCII data (.dat),1670400,Survey Datasets,223,NG2003DHS,Couples' Recode,"August, 18 2004 13:20:40",2003,DHS,2003,NG,ngcr4afl.zip,Nigeria
+Flat ASCII data (.dat),2088196,Survey Datasets,223,NG2003DHS,Household Recode,"October, 05 2005 13:05:59",2003,DHS,2003,NG,nghr4bfl.zip,Nigeria
+Flat ASCII data (.dat),3652996,Survey Datasets,223,NG2003DHS,Births Recode,"May, 22 2007 11:07:44",2003,DHS,2003,NG,NGBR4BFL.zip,Nigeria
+Flat ASCII data (.dat),287807,GPS Datasets,223,NG2003DHS,Geographic Data,"March, 05 2012 18:26:54",2003,DHS,2003,NG,NGGE4BFL.zip,Nigeria
+Flat ASCII data (.dat),84925,GPS Datasets,302,NG2008DHS,Geographic Data,"April, 21 2017 17:12:14",2008,DHS,2008,NG,NGGE52FL.zip,Nigeria
+Flat ASCII data (.dat),11667456,Survey Datasets,302,NG2008DHS,Births Recode,"December, 16 2014 11:09:11",2008,DHS,2008,NG,NGBR53FL.ZIP,Nigeria
+Flat ASCII data (.dat),13034499,Survey Datasets,302,NG2008DHS,Household Recode,"December, 16 2014 11:08:59",2008,DHS,2008,NG,NGHR53FL.ZIP,Nigeria
+Flat ASCII data (.dat),6481597,Survey Datasets,302,NG2008DHS,Couples' Recode,"December, 16 2014 11:09:17",2008,DHS,2008,NG,NGCR53FL.ZIP,Nigeria
+Flat ASCII data (.dat),19997196,Survey Datasets,302,NG2008DHS,Individual Recode,"December, 16 2014 11:09:07",2008,DHS,2008,NG,NGIR53FL.ZIP,Nigeria
+Flat ASCII data (.dat),7557895,Survey Datasets,302,NG2008DHS,Children's Recode,"December, 16 2014 11:09:08",2008,DHS,2008,NG,NGKR53FL.ZIP,Nigeria
+Flat ASCII data (.dat),1203990,GPS Datasets,302,NG2008DHS,Geospatial Covariates,"September, 06 2018 16:09:49",2008,DHS,2008,NG,NGGC52FL.ZIP,Nigeria
+Flat ASCII data (.dat),3422159,Survey Datasets,302,NG2008DHS,Men's Recode,"April, 13 2012 11:44:43",2008,DHS,2008,NG,NGMR52FL.ZIP,Nigeria
+Flat ASCII data (.dat),8804687,Survey Datasets,302,NG2008DHS,Household Member Recode,"December, 16 2014 11:09:13",2008,DHS,2008,NG,NGPR53FL.ZIP,Nigeria
+Flat ASCII data (.dat),1220209,Survey Datasets,392,NG2010MIS,Household Member Recode,"June, 12 2012 09:13:51",2010,MIS,2010,NG,NGPR61FL.ZIP,Nigeria
+Flat ASCII data (.dat),793493,GPS Datasets,392,NG2010MIS,Geospatial Covariates,"September, 06 2018 16:09:49",2010,MIS,2010,NG,NGGC62FL.ZIP,Nigeria
+Flat ASCII data (.dat),602046,Survey Datasets,392,NG2010MIS,Children's Recode,"June, 12 2012 09:13:49",2010,MIS,2010,NG,NGKR61FL.ZIP,Nigeria
+Flat ASCII data (.dat),1282437,Survey Datasets,392,NG2010MIS,Individual Recode,"June, 12 2012 09:13:49",2010,MIS,2010,NG,NGIR61FL.ZIP,Nigeria
+Flat ASCII data (.dat),1512761,Survey Datasets,392,NG2010MIS,Household Recode,"June, 12 2012 09:13:47",2010,MIS,2010,NG,NGHR61FL.ZIP,Nigeria
+Flat ASCII data (.dat),1092741,Survey Datasets,392,NG2010MIS,Births Recode,"June, 12 2012 09:13:50",2010,MIS,2010,NG,NGBR61FL.ZIP,Nigeria
+Flat ASCII data (.dat),31119,GPS Datasets,392,NG2010MIS,Geographic Data,"March, 02 2012 14:42:16",2010,MIS,2010,NG,NGGE61FL.ZIP,Nigeria
+Flat ASCII data (.dat),86827,GPS Datasets,438,NG2013DHS,Geographic Data,"June, 17 2014 08:17:08",2013,DHS,2013,NG,NGGE6AFL.ZIP,Nigeria
+Flat ASCII data (.dat),13918750,Survey Datasets,438,NG2013DHS,Births Recode,"June, 02 2014 12:26:18",2013,DHS,2013,NG,NGBR6AFL.ZIP,Nigeria
+Flat ASCII data (.dat),14215266,Survey Datasets,438,NG2013DHS,Household Recode,"June, 02 2014 12:25:33",2013,DHS,2013,NG,NGHR6AFL.ZIP,Nigeria
+Flat ASCII data (.dat),5445517,Survey Datasets,438,NG2013DHS,Couples' Recode,"June, 02 2014 12:26:39",2013,DHS,2013,NG,NGCR6AFL.ZIP,Nigeria
+Flat ASCII data (.dat),23301045,Survey Datasets,438,NG2013DHS,Individual Recode,"June, 02 2014 12:25:55",2013,DHS,2013,NG,NGIR6AFL.ZIP,Nigeria
+Flat ASCII data (.dat),8376127,Survey Datasets,438,NG2013DHS,Children's Recode,"June, 02 2014 12:26:03",2013,DHS,2013,NG,NGKR6AFL.ZIP,Nigeria
+Flat ASCII data (.dat),1194918,GPS Datasets,438,NG2013DHS,Geospatial Covariates,"September, 06 2018 16:09:49",2013,DHS,2013,NG,NGGC6BFL.ZIP,Nigeria
+Flat ASCII data (.dat),10161759,Survey Datasets,438,NG2013DHS,Household Member Recode,"June, 02 2014 12:26:30",2013,DHS,2013,NG,NGPR6AFL.ZIP,Nigeria
+Flat ASCII data (.dat),3521030,Survey Datasets,438,NG2013DHS,Men's Recode,"June, 02 2014 12:26:34",2013,DHS,2013,NG,NGMR6AFL.ZIP,Nigeria
+Flat ASCII data (.dat),2156732,Survey Datasets,474,NG2015MIS,Household Member Recode,"June, 09 2016 14:19:42",2015,MIS,2015,NG,NGPR71FL.ZIP,Nigeria
+Flat ASCII data (.dat),846578,GPS Datasets,474,NG2015MIS,Geospatial Covariates,"September, 06 2018 16:09:49",2015,MIS,2015,NG,NGGC72FL.ZIP,Nigeria
+Flat ASCII data (.dat),30916,Survey Datasets,474,NG2015MIS,Fieldworker Questionnaire,"March, 26 2018 23:26:32",2015,MIS,2015,NG,NGFW72FL.ZIP,Nigeria
+Flat ASCII data (.dat),1079138,Survey Datasets,474,NG2015MIS,Children's Recode,"June, 09 2016 14:19:40",2015,MIS,2015,NG,NGKR71FL.ZIP,Nigeria
+Flat ASCII data (.dat),2045198,Survey Datasets,474,NG2015MIS,Individual Recode,"June, 09 2016 14:19:39",2015,MIS,2015,NG,NGIR71FL.ZIP,Nigeria
+Flat ASCII data (.dat),2528139,Survey Datasets,474,NG2015MIS,Household Recode,"June, 09 2016 14:19:36",2015,MIS,2015,NG,NGHR71FL.ZIP,Nigeria
+Flat ASCII data (.dat),43376,GPS Datasets,474,NG2015MIS,Geographic Data,"March, 08 2017 11:17:39",2015,MIS,2015,NG,NGGE71FL.zip,Nigeria
