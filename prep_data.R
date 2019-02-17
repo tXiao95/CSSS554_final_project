@@ -3,7 +3,6 @@ library(rdhs)
 library(haven)
 library(ggplot2)
 library(argparse)
-library(here)
 
 #' Take surveys I want and save to a more accessible format: convert form .rds to .csv
 #' Necessary variables
