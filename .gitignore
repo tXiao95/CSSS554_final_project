@@ -37,6 +37,6 @@ Thumbs.db
 
 # Subdirectories with DHS requiring Access
 ##########################################
-data/NER
-data/NGA
+data/NER/
+data/NGA/
 rdhs.json
