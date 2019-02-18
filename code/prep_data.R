@@ -109,7 +109,7 @@ collapse_asfr <- function(br, ir, recall_yr = 3, length_of_period_yr = 3, age_bi
   indiv[, age_group_month_start := ifelse(12 * age < age_months_begin_period, age_months_begin_period, 12 * age)]
   #' If the point at which the woman reached the end of the age group is after the point at which the period ends, 
   #' then replace the value of end with the point at which the period ends
-  indiv[, age_group_month_end := ifelse(12 * (age + 5) - 1 > age_months_end_period, age_months_end_period, 12 * (age + 5) - 1)]
+  indiv[, age_group_month_end := ifelse(12 * (age + 5) > age_months_end_period, age_months_end_period, 12 * (age + 5))]
   indiv[, months_exposure := age_group_month_end - age_group_month_start]
   
   #' Collapse to person years per age group and period
