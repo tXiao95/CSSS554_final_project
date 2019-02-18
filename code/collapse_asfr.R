@@ -1,59 +1,14 @@
 library(data.table)
-library(rdhs)
-library(haven)
 library(ggplot2)
+library(rdhs)
 library(argparse)
+library(magrittr)
+library(readr)
 
-#' Necessary variables
-#' b3: CMC DOB of child
-#' v011: CMC DOB of respondent (mother)
-#' v008: CMC date of interview
-#' v005: Woman's individual sample weight
-#' v020: Ever married indicator
-#' awfactt: All woman factor (Only needed with ever-married samples)
-#' v021: primary sampling unit
-#' v022: Strata
+home_dir <- "C:/Users/twh42/Documents/UW_Class/CSSS_554/final_project"
+setwd(home_dir)
 
-to_cmc  <- function(y){12 * (y - 1900) + 1}
-inv_cmc <- function(cmc){(cmc - 1) / 12 + 1900}
-
-#' Set up and read in variables
-downloads <- readRDS("downloads.rds")
-datasets  <- fread("datasets.csv")
-
-#' Identify variables to pull from each dataset
-nec_var <- c("caseid", "b3", "v011", "v008", "v005", "v020", "awfactt", "v021","v022", "v023", "v024", "v025")
-rename  <- c("id", "cmc_birth", "cmc_mom_dob", "cmc_interview", "pweight", "ever_married", "awfactt", 
-             "psu", "strata","self_weight", "region_residence", "urban_rural")
-var_map <- data.table(short = nec_var, full = rename)
-
-#' Perform operations on both the Birth and Individual Recode
-br_dfs  <- datasets[FileType == "Births Recode"]
-ir_dfs  <- datasets[FileType == "Individual Recode"]
-gps_dfs <- datasets[FileType == "Geographic Data"]
-
-br <- rdhs::search_variables(br_dfs$FileName, variables = nec_var, reformat = T) %>%
-      rdhs::extract_dhs(add_geo = T) %>%
-      data.table::rbindlist(fill = T) 
-
-ir <- rdhs::search_variables(ir_dfs$FileName, variables = nec_var, reformat = T) %>%
-      rdhs::extract_dhs(add_geo = T) %>%
-      data.table::rbindlist(fill = T)
-
-gps <- (lapply(gps_dfs$FileName, function(x){
-  x <- gsub("ZIP|zip", "rds", x)
-  df <- readRDS(paste0("data/NGA/datasets/", x))
-  df
-}))
-
-br[, ADM1NAME := ifelse(ADM1NAME == "NULL", NA, ADM1NAME)]
-br[, ADM1NAME := toslower(ADM1NAME)]
-ir[, ADM1NAME := ifelse(ADM1NAME == "NULL", NA, ADM1NAME)]
-ir[, ADM1NAME := tolower(ADM1NAME)]
-names(br)[names(br) %in% var_map$short] <- var_map[short %in% names(br),full]
-names(ir)[names(ir) %in% var_map$short] <- var_map[short %in% names(ir),full]
-
-collapse_asfr <- function(br, ir, recall_yr = 3, length_of_period_yr = 3, age_bins = 5, level = "all"){
+collapse_asfr <- function(level = "all", br, ir, recall_yr = 3, length_of_period_yr = 3, age_bins = 5){
   #' @description Uses the BR and IR microdata to collapse into 15-49 ASFR 
   #' @param br : A data.table with BR module
   #' @param ir : A data.table with IR module
@@ -68,12 +23,21 @@ collapse_asfr <- function(br, ir, recall_yr = 3, length_of_period_yr = 3, age_bi
   message(paste0("Age Interval: ", age_bins, " Years"))
   message(paste0("Recall Length: ", recall_yr, " Years"))
   message(paste0("Estimation Period length: ", length_of_period_yr, " Years"))
+  message(paste0("Collapsing to level: ", level))
   age_bin_months          <- 12 * age_bins
   recall_months           <- 12 * recall_yr
   length_of_period_months <- 12 * length_of_period_yr
   
+  #' Checks on arguments
+  if (!(class(ir)[1] == "data.table" & class(br)[1] == "data.table")){stop("BR and IR datasets must be data.table")}
   if (!(age_bins %in% c(1, 5))){stop("Only 5-yr or 1-yr intervals allowed")}
   if (!(level %in% c("all", "admin1"))){stop("Only 'all' or 'admin1' aggregations allowed")}
+  
+  if(level == "all"){
+    id.vars <- c("age", "period", "SurveyId")
+  } else if(level == "admin1"){
+    id.vars <- c("age", "period", "SurveyId", "ADM1NAME")
+  }
   
   ####### NUMERATOR ##################
   #' Begin by calculating the dataset holding the numberator. Exclude 1 month before interview due to censoring
@@ -84,8 +48,7 @@ collapse_asfr <- function(br, ir, recall_yr = 3, length_of_period_yr = 3, age_bi
   birth <- birth[between(period_birth_months, 1, recall_months, incbounds = T)] 
   # Calculate age group of women at time of birth - number of months divided by months in age interval
   birth[, age := age_bins * floor((cmc_birth - cmc_mom_dob) / age_bin_months)]
-  collapse_birth <- birth[, .(nbirths = sum(pweight / 1e6)), 
-                              by = .(period, age, SurveyId)]
+  collapse_birth <- birth[, .(nbirths = sum(pweight / 1e6)), by = id.vars]
   
   ####### DENOMINATOR ###############
   #' Now calculate the denominator - need to count the number of person years each woman 
@@ -114,7 +77,7 @@ collapse_asfr <- function(br, ir, recall_yr = 3, length_of_period_yr = 3, age_bi
   indiv[, age_months_end_period := (cmc_interview - 1) - (period * length_of_period_months) - cmc_mom_dob]
   indiv[, age_months_begin_period := (cmc_interview - 1) - ((period + 1) * length_of_period_months) - cmc_mom_dob]
   
-  indiv <- indiv[between(age, 10, 45)]
+  indiv <- indiv[between(age, 15, 45)]
   
   #' If the point at which the woman reached the beginning of the age group is before the point at which the period starts, 
   #' then replace the value of start with the point at which ther period began
@@ -126,23 +89,56 @@ collapse_asfr <- function(br, ir, recall_yr = 3, length_of_period_yr = 3, age_bi
   
   #' Collapse to person years per age group and weighted CMC for the whole group
   collapse_indiv <- indiv[,.(py = sum(pweight/1e6 * months_exposure) / 12, 
-                             cmc = weighted.mean(cmc_period, pweight/1e6)), .(age, period, SurveyId)]
+                             cmc = weighted.mean(cmc_period, pweight/1e6)), id.vars]
   
   #' Merge the births data with the women's PY 
-  final_df <- merge(collapse_birth, collapse_indiv, by = c("age", "period", "SurveyId"))
+  final_df <- merge(collapse_birth, collapse_indiv, by = id.vars)
   final_df[,asfr := nbirths / py]
   final_df[,year := floor((cmc - 1) / 12) + 1900]
   
-  #' Assume the counts of fertility have Poisson distributions...though fertility counts 
+  #' Data variance calculation: Assume the counts of fertility have Poisson distributions...though fertility counts 
   #' are usually much more frequent than usual disease outcomes
   final_df[, se := sqrt(nbirths) / py]
   final_df[, lower := 0.5 * qchisq(0.05 / 2, 2 * nbirths) / py]
   final_df[, upper := 0.5 * qchisq(1 - 0.05 / 2, 2 * (nbirths + 1)) / py]
   
+  if(level == "admin1"){
+    final_df <- final_df[!is.na(ADM1NAME)]
+  }
+  
+  #' Create age interval columns
+  setnames(final_df, "age", "age_start")
+  final_df[, age_end := age_start + (age_bins - 1)]
+  final_df[, length_of_period_yr := length_of_period_yr]
+  final_df[, recall_yr := recall_yr]
+  final_df[, age_bins := age_bins]
   
   final_df
 }
 
-final_df <- collapse_asfr(br, ir, recall_yr = 15, length_of_period_yr = 3, age_bins = 5, level = "all")
+##### MAIN SCRIPT ###########
+br <- fread("data/prepped/birth_recode.csv")
+ir <- fread("data/prepped/women_recode.csv")
 
-readr::write_csv(final_df, paste0("data/prepped/data.csv"))
+#' DHS uses recall of 3, length of period of 3, and age intervals of 5 yrs
+recall_yr           <- 3
+length_of_period_yr <- 3
+age_bins            <- 5
+filename_asfr       <- sprintf("asfr_recall_%d_length_%d_age_%d.csv", 
+                               recall_yr, length_of_period_yr, age_bins)
+filename_tfr        <- sprintf("tfr_recall_%d_length_%d_age_%d.csv", 
+                               recall_yr, length_of_period_yr, age_bins)
+
+df <- rbindlist(lapply(c("all", "admin1"), collapse_asfr, br, ir, recall_yr, length_of_period_yr, age_bins), fill = T)
+df[is.na(ADM1NAME), ADM1NAME := "national"]
+
+tfr <- df[,.(tfr = 5 * sum(asfr), 
+             age_start = min(age_start), 
+             age_end = max(age_end), 
+             num_age = .N), by = .(SurveyId, period, ADM1NAME, length_of_period_yr, recall_yr, age_bins)]
+
+#' Only take TFR data that has all 7 age groups within 15-49, or TFR over 15-44
+tfr <- tfr[num_age == 7 | (age_start == 15 & age_end == 44 & num_age == 6)]
+
+readr::write_csv(df, paste0("data/prepped/", filename_asfr))
+readr::write_csv(tfr, paste0("data/prepped/", filename_tfr))

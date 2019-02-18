@@ -3,6 +3,7 @@ library(rdhs)
 library(haven)
 library(ggplot2)
 library(argparse)
+library(magrittr)
 
 home_dir <- "C:/Users/twh42/Documents/UW_Class/CSSS_554/final_project"
 setwd(home_dir)
