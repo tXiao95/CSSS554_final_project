@@ -9,10 +9,12 @@ tags  <- rdhs::dhs_tags()
 tagid <- tags[TagName == "Fertility Rates", TagID]
 
 ind    <- rdhs::dhs_indicators()
-ind_id <- ind[9,.(IndicatorId, Definition)]$IndicatorId
+ind_id <- ind[1:9,.(IndicatorId, Definition)]$IndicatorId
 
-df <- dhs_data(tagIds = tagid, 
+dhs <- dhs_data(tagIds = tagid, 
                countryIds = "NG", 
                surveyYearStart = 1970, 
-               breakdown = "subnational", 
-               indicatorIds = ind_id)[IndicatorId == ind_id]
+               #breakdown = "subnational", 
+               indicatorIds = ind_id)[IndicatorId %in% ind_id]
+
+
