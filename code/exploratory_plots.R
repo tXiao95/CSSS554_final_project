@@ -1,13 +1,26 @@
 library(data.table)
 library(ggplot2)
 
-asfr <- fread("data/prepped/asfr_recall_3_length_3_age_5.csv")
-tfr <- fread("data/prepped/tfr_recall_3_length_3_age_5.csv")
+home_dir <- "C:/Users/twh42/Documents/UW_Class/CSSS_554/final_project"
+setwd(home_dir)
 
-figures_path <- "figures/"
+#' Set parameters
+recall   <- 3
+length   <- 3
+age_bins <- 5
+
+#' Read in data
+asfr_path <- sprintf("data/prepped/asfr_recall_%d_length_%d_age_%d.csv", recall, length, age_bins)
+tfr_path  <- sprintf("data/prepped/tfr_recall_%d_length_%d_age_%d.csv", recall, length, age_bins)
+asfr      <- fread(asfr_path); asfr[, inverse_variance :=  1/se^2]
+tfr       <- fread(tfr_path)
+
+age_pattern_path <- sprintf("figures/age_pattern_subnat_recall_%d_length_%d_age_%d.pdf", recall, length, age_bins)
+time_series_path <- sprintf("figures/time_series_subnat_recall_%d_length_%d_age_%d.pdf", recall, length, age_bins)
 
 
-pdf(file = paste0(figures_path, "age_pattern_subnat.pdf"), height = 13, width = 18)
+#' Age pattern Plots for national and subnational
+pdf(file = age_pattern_path, height = 13, width = 18)
 for(loc in unique(asfr$ADM1NAME)){
   message(loc)
   gg <- ggplot(asfr[ADM1NAME == loc], aes((age_start + age_end) / 2, asfr)) + 
@@ -15,44 +28,31 @@ for(loc in unique(asfr$ADM1NAME)){
     geom_line(aes(col = SurveyId)) + 
     #geom_errorbarh(aes(xmin = age_start, xmax = age_end, col = SurveyId), height = 0) + 
     #geom_errorbar(aes(ymin = lower, ymax = upper, col = SurveyId), width = 0) + 
-    facet_wrap(~period) + 
+    facet_wrap(~period_year) + 
     theme_bw(base_size = 25) + 
     xlab("Age") + 
     ylab("ASFR") + 
-    ggtitle(loc)
+    scale_size(range = c(2,10)) + 
+    ggtitle(loc) + 
+    guides(size = F)
   print(gg)
 }
 dev.off()
 
-pdf(file = paste0(figures_path, "timeseries_subnat.pdf"), height = 13, width = 18)
+#' Time Series plot per Age group for national and subnational
+pdf(file = time_series_path, height = 13, width = 18)
 for(loc in unique(asfr$ADM1NAME)){
   message(loc)
-  gg <- ggplot(asfr[ADM1NAME == loc], aes(year, asfr)) + 
-    geom_point(aes(col = SurveyId), size = 3, alpha = 0.5) +
-    geom_errorbar(aes(ymin = lower, ymax = upper, col = SurveyId), width = 0) + 
+  gg <- ggplot(asfr[ADM1NAME == loc], aes(period_year, asfr)) + 
+    geom_point(aes(col = SurveyId, size = (inverse_variance)), alpha = 0.5) +
+    #geom_errorbar(aes(ymin = lower, ymax = upper, col = SurveyId), width = 0) + 
     facet_wrap(~age_start) + 
     theme_bw(base_size = 30) + 
-    ggtitle(loc)
+    ggtitle(loc) + 
+    scale_size(range = c(2, 10)) + 
+    xlab("Year") + 
+    ylab("ASFR") + 
+    guides(size = F)
   print(gg)
 }
-dev.off()
-
-setnames(df, "age", "age_start")
-df[, age_end := age_start ]
-# Time Series for each age group
-pdf(file = paste0(figures_path, "time_series.pdf"), height = 13, width = 18)
-gg1 <- ggplot(final_df, aes(year, asfr)) + 
-  geom_point(aes(col = SurveyId), size = 3, alpha = 0.5) +
-  geom_errorbar(aes(ymin = lower, ymax = upper, col = SurveyId), width = 0) + 
-  facet_wrap(~age) + 
-  theme_bw(base_size = 30)
-print(gg1)
-dev.off()
-
-pdf(file = paste0(figures_path, "asfr_se_scatter.pdf"), height = 13, width = 18)
-gg3 <- ggplot(df, aes(asfr, se)) + 
-  geom_point(size = 5) + 
-  ggtitle("Rate vs. SE Scatter") + 
-  theme_bw(base_size = 25)
-print(gg3)
 dev.off()

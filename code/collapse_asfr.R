@@ -112,6 +112,7 @@ collapse_asfr <- function(level = "all", br, ir, recall_yr = 3, length_of_period
   final_df[, length_of_period_yr := length_of_period_yr]
   final_df[, recall_yr := recall_yr]
   final_df[, age_bins := age_bins]
+  final_df[, period_year := as.numeric(gsub("NG|DHS|MIS", "", SurveyId)) - 0.5 * (period + 1) * length_of_period_yr]
   
   final_df
 }
@@ -135,7 +136,7 @@ df[is.na(ADM1NAME), ADM1NAME := "national"]
 tfr <- df[,.(tfr = 5 * sum(asfr), 
              age_start = min(age_start), 
              age_end = max(age_end), 
-             num_age = .N), by = .(SurveyId, period, ADM1NAME, length_of_period_yr, recall_yr, age_bins)]
+             num_age = .N), by = .(SurveyId, period, period_year, ADM1NAME, length_of_period_yr, recall_yr, age_bins)]
 
 #' Only take TFR data that has all 7 age groups within 15-49, or TFR over 15-44
 tfr <- tfr[num_age == 7 | (age_start == 15 & age_end == 44 & num_age == 6)]
