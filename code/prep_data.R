@@ -112,10 +112,11 @@ collapse_asfr <- function(br, ir, recall_yr = 3, length_of_period_yr = 3, age_bi
   indiv[, age_group_month_end := ifelse(12 * (age + 5) - 1 > age_months_end_period, age_months_end_period, 12 * (age + 5) - 1)]
   indiv[, months_exposure := age_group_month_end - age_group_month_start]
   
-  collapse_indiv <- indiv[,.(mexp = sum(pweight/1e6 * months_exposure)), .(age, period, SurveyId)]
+  #' Collapse to person years per age group and period
+  collapse_indiv <- indiv[,.(py = sum(pweight/1e6 * months_exposure) / 12), .(age, period, SurveyId)]
   
   final_df <- merge(collapse_birth, collapse_indiv, by = c("age", "period", "SurveyId"))
-  final_df[,asfr := nbirths / mexp]
+  final_df[,asfr := nbirths / py]
   
   final_df
 }
