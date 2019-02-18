@@ -41,3 +41,5 @@ data/NER/
 data/NGA/
 rdhs.json
 packrat/
+packrat/lib*/
+data/prepped/
