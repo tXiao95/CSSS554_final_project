@@ -12,7 +12,7 @@ library(argparse)
 #' v005: Woman's individual sample weight
 #' awfactt: All woman factor (Only needed with ever-married samples)
 
-to_cmc  <- function(y){12 * (y - 1900) + 12}
+to_cmc  <- function(y){12 * (y - 1900) + 1}
 inv_cmc <- function(cmc){(cmc - 12) / 12 + 1900}
 
 #' Set up and read in variables
@@ -34,9 +34,9 @@ br <- rdhs::search_variables(br_dfs$FileName, variables = nec_var, reformat = T)
       rdhs::extract_dhs(add_geo = T) %>%
       data.table::rbindlist(fill = T) 
 
-ir <- search_variables(ir_dfs$FileName, variables = nec_var, reformat = T) %>%
-      extract_dhs(add_geo = T) %>%
-      rbindlist(fill = T)
+ir <- rdhs::search_variables(ir_dfs$FileName, variables = nec_var, reformat = T) %>%
+      rdhs::extract_dhs(add_geo = T) %>%
+      data.table::rbindlist(fill = T)
 
 gps <- (lapply(gps_dfs$FileName, function(x){
   x <- gsub("ZIP|zip", "rds", x)
@@ -55,9 +55,10 @@ collapse_asfr <- function(br, ir, recall_yr = 3, length_of_period_yr = 3, age_bi
   #' @description Uses the BR and IR microdata to collapse into 15-49 ASFR 
   #' @param br : A data.table with BR module
   #' @param ir : A data.table with IR module
-  #' @param recall : How many months before the interview to count births. 
-  #' @param length_period : The number of years to calculate ASFR 
-  #' @param age_bins: Either 5 or 1 in years. The age intervals to collapse ASFR into - either single year or 5-yr
+  #' @param recall_yr : How many years before the interview to count births. 
+  #' @param length_period_yr : The number of years to calculate ASFR over within the Recall period. For example, 
+  #' a recall of 15 years and a length of period of 3 years would result in 5 calculations of ASFR 
+  #' @param age_bins: The age intervals to collapse ASFR into - either single year or 5-yr
   
   birth <- copy(br)
   indiv <- copy(ir)
@@ -70,36 +71,51 @@ collapse_asfr <- function(br, ir, recall_yr = 3, length_of_period_yr = 3, age_bi
   
   if (!(age_bins %in% c(1, 5))){stop("Only 5-yr or 1-yr intervals allowed")}
   
-  
-  ###### NUMERATOR ##################
+  ####### NUMERATOR ##################
   #' Begin by calculating the dataset holding the numberator. Exclude 1 month before interview due to censoring
   birth[, period_birth_months := cmc_interview - cmc_birth]
   #' -1 from months so that X months before interview is included in the preceding period
-  birth[, period_birth := (period_birth_months - 1) %/% (length_of_period_months)] 
+  birth[, period := (period_birth_months - 1) %/% (length_of_period_months)] 
   # Include all births from end of recall period to 1 months before the interview (since month of interview is censored)
-  birth <- birth[period_birth_months <= recall_months & period_birth_months >= 1] 
+  birth <- birth[between(period_birth_months, 1, recall_months, incbounds = T)] 
   # Calculate age group of women at time of birth - number of months divided by months in age interval
   birth[, age := age_bins * floor((cmc_birth - cmc_mom_dob) / age_bin_months)]
   collapse_birth <- birth[, .(nbirths = sum(pweight / 1e6)), 
-                              by = .(period_birth, agegroup, CLUSTER, SurveyId)]
+                              by = .(period, age, SurveyId)]
   
   ####### DENOMINATOR ###############
   #' Now calculate the denominator - need to count the number of person years each woman 
   #' 1. Calculate number of estimation periods allowed for within the recall period defined
   indiv[, num_periods := length(recall_months / length_of_period_months)]
-  #' Expand the women's dataset so that each women is counted the number of periods she lived through
+  #' Expand the women's dataset so that each women is counted the number of estimation periods she lived through
   indiv <- indiv[rep(1:.N, num_periods)][, period := 0:(.N-1), by = .(id, SurveyId)]
-  #' 2. Calculate the beginning and end age group the woman contributed exposure to within each estimation period. Subtract 1 is for counting age 
-  #' and periods starting from the 1 month preceding the month of the interview
-  indiv[, age_end_period := age_bins * floor((cmc_interview - period * length_of_period_months - 1 - cmc_mom_dob) / age_bin_months)]
-  indiv[, age_begin_period := age_bins * floor((cmc_interview - (period + 1) * length_of_period_months - 1 - cmc_mom_dob) / age_bin_months)]
+  #' 2. Calculate the beginning and end age group the woman contributed exposure to within each estimation period. Subtract 1 is for counting final 
+  #' age at the 1 month preceding the month of the interview
+  indiv[, age_end_period := age_bins * floor((cmc_interview - 1 - period * length_of_period_months - cmc_mom_dob) / age_bin_months)]
+  indiv[, age_begin_period := age_bins * floor((cmc_interview - 1 - (period + 1) * length_of_period_months - cmc_mom_dob) / age_bin_months)]
   #' 3. Calculate the number of age groups that woman contributed to within the estimation period
   indiv[, num_age_groups := 1 + (age_end_period - age_begin_period) / age_bins]
   #' 4. Expand the data drame so each woman is counted the number of age groups she lived through within each period
   indiv <- indiv[rep(1:.N, num_age_groups)][, age_step := 0:(.N-1), by = .(id, SurveyId)]
-  #' 5. Calculate the age group that the given row corresponds to
+  #' 5. Calculate the age group that the given row corresponds to. Now have period-age specific rows
   indiv[, age := age_begin_period + age_step * age_bins]
-  #' 6. Compute the number of months the woman contributed to for the given "period-age"
+  #' 6. Compute the number of months the woman contributed to an age group for the given "period-age"
+  #' First, calculate the age in months of each woman at the beginning and end of the estimation period - across all the ages lived
+  indiv[, age_months_end_period := (cmc_interview - 1) - (period * length_of_period_months) - cmc_mom_dob]
+  indiv[, age_months_begin_period := (cmc_interview - 1) - ((period + 1) * length_of_period_months) - cmc_mom_dob]
   
+  #' If the point at which the woman reached the beginning of the age group is before the point at which the period starts, 
+  #' then replace the value of start with the point at which ther period began
+  indiv[, age_group_month_start := ifelse(12 * age < age_months_begin_period, age_months_begin_period, 12 * age)]
+  #' If the point at which the woman reached the end of the age group is after the point at which the period ends, 
+  #' then replace the value of end with the point at which the period ends
+  indiv[, age_group_month_end := ifelse(12 * (age + 5) - 1 > age_months_end_period, age_months_end_period, 12 * (age + 5) - 1)]
+  indiv[, months_exposure := age_group_month_end - age_group_month_start]
   
+  collapse_indiv <- indiv[,.(mexp = sum(pweight/1e6 * months_exposure)), .(age, period, SurveyId)]
+  
+  final_df <- merge(collapse_birth, collapse_indiv, by = c("age", "period", "SurveyId"))
+  final_df[,asfr := nbirths / mexp]
+  
+  final_df
 }
