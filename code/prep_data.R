@@ -4,16 +4,18 @@ library(haven)
 library(ggplot2)
 library(argparse)
 
-#' Take surveys I want and save to a more accessible format: convert form .rds to .csv
 #' Necessary variables
 #' b3: CMC DOB of child
 #' v011: CMC DOB of respondent (mother)
 #' v008: CMC date of interview
 #' v005: Woman's individual sample weight
+#' v020: Ever married indicator
 #' awfactt: All woman factor (Only needed with ever-married samples)
+#' v021: primary sampling unit
+#' v022: Strata
 
 to_cmc  <- function(y){12 * (y - 1900) + 1}
-inv_cmc <- function(cmc){(cmc - 12) / 12 + 1900}
+inv_cmc <- function(cmc){(cmc - 1) / 12 + 1900}
 
 #' Set up and read in variables
 downloads <- readRDS("downloads.rds")
@@ -45,8 +47,8 @@ gps <- (lapply(gps_dfs$FileName, function(x){
 }))
 
 br[, ADM1NAME := ifelse(ADM1NAME == "NULL", NA, ADM1NAME)]
-ir[, ADM1NAME := ifelse(ADM1NAME == "NULL", NA, ADM1NAME)]
 br[, ADM1NAME := toslower(ADM1NAME)]
+ir[, ADM1NAME := ifelse(ADM1NAME == "NULL", NA, ADM1NAME)]
 ir[, ADM1NAME := tolower(ADM1NAME)]
 names(br)[names(br) %in% var_map$short] <- var_map[short %in% names(br),full]
 names(ir)[names(ir) %in% var_map$short] <- var_map[short %in% names(ir),full]
@@ -107,6 +109,8 @@ collapse_asfr <- function(br, ir, recall_yr = 3, length_of_period_yr = 3, age_bi
   indiv[, age := age_begin_period + age_step * age_bins]
   #' 6. Compute the number of months the woman contributed to an age group for the given "period-age"
   #' First, calculate the age in months of each woman at the beginning and end of the estimation period - across all the ages lived
+  indiv[, cmc_exp_end := cmc_interview - (period * length_of_period_months) - 1]
+  indiv[, cmc_period := cmc_exp_end - (length_of_period_months * 0.5)]
   indiv[, age_months_end_period := (cmc_interview - 1) - (period * length_of_period_months) - cmc_mom_dob]
   indiv[, age_months_begin_period := (cmc_interview - 1) - ((period + 1) * length_of_period_months) - cmc_mom_dob]
   
@@ -120,13 +124,25 @@ collapse_asfr <- function(br, ir, recall_yr = 3, length_of_period_yr = 3, age_bi
   indiv[, age_group_month_end := ifelse(12 * (age + 5) > age_months_end_period, age_months_end_period, 12 * (age + 5))]
   indiv[, months_exposure := age_group_month_end - age_group_month_start]
   
-  #' Collapse to person years per age group and period
-  collapse_indiv <- indiv[,.(py = sum(pweight/1e6 * months_exposure) / 12), .(age, period, SurveyId)]
+  #' Collapse to person years per age group and weighted CMC for the whole group
+  collapse_indiv <- indiv[,.(py = sum(pweight/1e6 * months_exposure) / 12, 
+                             cmc = weighted.mean(cmc_period, pweight/1e6)), .(age, period, SurveyId)]
   
+  #' Merge the births data with the women's PY 
   final_df <- merge(collapse_birth, collapse_indiv, by = c("age", "period", "SurveyId"))
   final_df[,asfr := nbirths / py]
+  final_df[,year := floor((cmc - 1) / 12) + 1900]
+  
+  #' Assume the counts of fertility have Poisson distributions...though fertility counts 
+  #' are usually much more frequent than usual disease outcomes
+  final_df[, se := sqrt(nbirths) / py]
+  final_df[, lower := 0.5 * qchisq(0.05 / 2, 2 * nbirths) / py]
+  final_df[, upper := 0.5 * qchisq(1 - 0.05 / 2, 2 * (nbirths + 1)) / py]
+  
   
   final_df
 }
 
-final_df <- collapse_asfr(br, ir, recall_yr = 3, length_of_period_yr = 3, age_bins = 5, level = "all")
+final_df <- collapse_asfr(br, ir, recall_yr = 15, length_of_period_yr = 3, age_bins = 5, level = "all")
+
+readr::write_csv(final_df, paste0("data/prepped/data.csv"))
