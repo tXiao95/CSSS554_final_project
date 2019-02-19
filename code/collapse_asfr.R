@@ -122,7 +122,7 @@ br <- fread("data/prepped/birth_recode.csv")
 ir <- fread("data/prepped/women_recode.csv")
 
 #' DHS uses recall of 3, length of period of 3, and age intervals of 5 yrs
-recall_yr           <- 3
+recall_yr           <- 15
 length_of_period_yr <- 3
 age_bins            <- 5
 filename_asfr       <- sprintf("asfr_recall_%d_length_%d_age_%d.csv", 

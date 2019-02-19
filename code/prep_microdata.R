@@ -49,14 +49,15 @@ gps <- (lapply(gps_dfs$FileName, function(x){
 
 br[, ADM1NAME := ifelse(ADM1NAME == "NULL", NA, ADM1NAME)]
 br[, ADM1NAME := tolower(ADM1NAME)]
-br[ADM1NAME == "fct-abuja", ADM1NAME := "abuja"]
+br[ADM1NAME == "abuja", ADM1NAME := "fct-abuja"]
 ir[, ADM1NAME := ifelse(ADM1NAME == "NULL", NA, ADM1NAME)]
 ir[, ADM1NAME := tolower(ADM1NAME)]
-ir[ADM1NAME == "fct-abuja", ADM1NAME := "abuja"]
+ir[ADM1NAME == "abuja", ADM1NAME := "fct-abuja"]
 names(br)[names(br) %in% var_map$short] <- var_map[short %in% names(br),full]
 names(ir)[names(ir) %in% var_map$short] <- var_map[short %in% names(ir),full]
 
 readr::write_csv(br, paste0(outdir, "birth_recode.csv"))
 readr::write_csv(ir, paste0(outdir, "women_recode.csv"))
+saveRDS(gps, paste0(outdir, "gps.rds"))
 
 
