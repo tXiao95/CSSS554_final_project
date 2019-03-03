@@ -4,9 +4,12 @@ library(rdhs)
 library(argparse)
 library(magrittr)
 library(readr)
+library(sf)
 
+#' Filepaths
 home_dir <- "C:/Users/twh42/Documents/UW_Class/CSSS_554/final_project"
 setwd(home_dir)
+shp_path <- "data/NGA/shape_files/2010/shps/"
 
 collapse_asfr <- function(level = "all", br, ir, recall_yr = 3, length_of_period_yr = 3, age_bins = 5){
   #' @description Uses the BR and IR microdata to collapse into 15-49 ASFR 
@@ -36,7 +39,7 @@ collapse_asfr <- function(level = "all", br, ir, recall_yr = 3, length_of_period
   if(level == "all"){
     id.vars <- c("age", "period", "SurveyId")
   } else if(level == "admin1"){
-    id.vars <- c("age", "period", "SurveyId", "ADM1NAME")
+    id.vars <- c("age", "period", "SurveyId", "STATE")
   }
   
   ####### NUMERATOR ##################
@@ -103,7 +106,7 @@ collapse_asfr <- function(level = "all", br, ir, recall_yr = 3, length_of_period
   final_df[, upper := 0.5 * qchisq(1 - 0.05 / 2, 2 * (nbirths + 1)) / py]
   
   if(level == "admin1"){
-    final_df <- final_df[!is.na(ADM1NAME)]
+    final_df <- final_df[!is.na(STATE)]
   }
   
   #' Create age interval columns
@@ -117,12 +120,36 @@ collapse_asfr <- function(level = "all", br, ir, recall_yr = 3, length_of_period
   final_df
 }
 
+impute_lat_long <- function(df, shp_path){
+  #' @param df : THe data frame
+  #' @param shp_path : The filepath to the shape file
+  shp <- sf::st_read(paste0(shp_path, "sdr_subnational_boundaries2.shp"))
+  shp$STATE <- tolower(shp$REGNAME)
+  
+  df <- df %>% 
+    sf::st_as_sf(coords = c("LONGNUM", "LATNUM"), crs = 
+                   sf::st_crs(shp)) %>%
+    sf::st_join(shp) %>%
+    st_set_geometry(NULL) %>% 
+    data.table()
+  df[is.na(STATE), STATE := ADM1NAME]
+  df
+}
+
 ##### MAIN SCRIPT ###########
 br <- fread("data/prepped/birth_recode.csv")
 ir <- fread("data/prepped/women_recode.csv")
+gps <- readRDS(paste0("data/prepped/gps.rds"))[[4]]
+
+br <- impute_lat_long(br, shp_path)
+ir <- impute_lat_long(ir, shp_path)
+
+# Mismatches b/w shapefile and DHS Survey
+#merge(br_admin[!is.na(ADM1NAME) & !is.na(STATE) & ADM1NAME != STATE,.N,.(id, CLUSTER, SEC, SurveyId)], gps_short, by = "SEC")
+#merge(br_admin[is.na(STATE),.N,.(CLUSTER,ALT_DEM, SEC, SurveyId)], gps_short, by = "SEC")
 
 #' DHS uses recall of 3, length of period of 3, and age intervals of 5 yrs
-recall_yr           <- 15
+recall_yr           <- 3
 length_of_period_yr <- 3
 age_bins            <- 5
 filename_asfr       <- sprintf("asfr_recall_%d_length_%d_age_%d.csv", 
@@ -131,12 +158,12 @@ filename_tfr        <- sprintf("tfr_recall_%d_length_%d_age_%d.csv",
                                recall_yr, length_of_period_yr, age_bins)
 
 df <- rbindlist(lapply(c("all", "admin1"), collapse_asfr, br, ir, recall_yr, length_of_period_yr, age_bins), fill = T)
-df[is.na(ADM1NAME), ADM1NAME := "national"]
+df[is.na(STATE), STATE := "national"]
 
 tfr <- df[,.(tfr = 5 * sum(asfr), 
              age_start = min(age_start), 
              age_end = max(age_end), 
-             num_age = .N), by = .(SurveyId, period, period_year, ADM1NAME, length_of_period_yr, recall_yr, age_bins)]
+             num_age = .N), by = .(SurveyId, period, period_year, STATE, length_of_period_yr, recall_yr, age_bins)]
 
 #' Only take TFR data that has all 7 age groups within 15-49, or TFR over 15-44
 tfr <- tfr[num_age == 7 | (age_start == 15 & age_end == 44 & num_age == 6)]

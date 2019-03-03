@@ -53,6 +53,8 @@ br[ADM1NAME == "abuja", ADM1NAME := "fct-abuja"]
 ir[, ADM1NAME := ifelse(ADM1NAME == "NULL", NA, ADM1NAME)]
 ir[, ADM1NAME := tolower(ADM1NAME)]
 ir[ADM1NAME == "abuja", ADM1NAME := "fct-abuja"]
+ir[ADM1NAME == "fct abuja", ADM1NAME := "fct-abuja"]
+ir[ADM1NAME == "borno - urban", ADM1NAME := "borno"]
 names(br)[names(br) %in% var_map$short] <- var_map[short %in% names(br),full]
 names(ir)[names(ir) %in% var_map$short] <- var_map[short %in% names(ir),full]
 

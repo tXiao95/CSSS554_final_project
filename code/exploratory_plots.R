@@ -21,9 +21,9 @@ time_series_path <- sprintf("figures/time_series_subnat_recall_%d_length_%d_age_
 
 #' Age pattern Plots for national and subnational
 pdf(file = age_pattern_path, height = 13, width = 18)
-for(loc in unique(asfr$ADM1NAME)){
+for(loc in unique(asfr$STATE)){
   message(loc)
-  gg <- ggplot(asfr[ADM1NAME == loc], aes((age_start + age_end) / 2, asfr)) + 
+  gg <- ggplot(asfr[STATE == loc], aes((age_start + age_end) / 2, asfr)) + 
     geom_point(aes(col = SurveyId), alpha = 0.5, size = 3) + 
     geom_line(aes(col = SurveyId)) + 
     #geom_errorbarh(aes(xmin = age_start, xmax = age_end, col = SurveyId), height = 0) + 
@@ -41,9 +41,9 @@ dev.off()
 
 #' Time Series plot per Age group for national and subnational
 pdf(file = time_series_path, height = 13, width = 18)
-for(loc in unique(asfr$ADM1NAME)){
+for(loc in unique(asfr$STATE)){
   message(loc)
-  gg <- ggplot(asfr[ADM1NAME == loc], aes(period_year, asfr)) + 
+  gg <- ggplot(asfr[STATE == loc], aes(period_year, asfr)) + 
     geom_point(aes(col = SurveyId, size = (inverse_variance)), alpha = 0.5) +
     #geom_errorbar(aes(ymin = lower, ymax = upper, col = SurveyId), width = 0) + 
     facet_wrap(~age_start) + 
