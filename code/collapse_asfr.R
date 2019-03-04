@@ -121,6 +121,8 @@ collapse_asfr <- function(level = "all", br, ir, recall_yr = 3, length_of_period
 }
 
 impute_lat_long <- function(df, shp_path){
+  #' @description With a dataframe with lat and long columns, uses admin information from 
+  #' provided shapefile to determine new admin1
   #' @param df : THe data frame
   #' @param shp_path : The filepath to the shape file
   shp <- sf::st_read(paste0(shp_path, "sdr_subnational_boundaries2.shp"))

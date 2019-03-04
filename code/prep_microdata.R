@@ -47,6 +47,7 @@ gps <- (lapply(gps_dfs$FileName, function(x){
   df
 }))
 
+#' Standardize Admin1 State names
 br[, ADM1NAME := ifelse(ADM1NAME == "NULL", NA, ADM1NAME)]
 br[, ADM1NAME := tolower(ADM1NAME)]
 br[ADM1NAME == "abuja", ADM1NAME := "fct-abuja"]

@@ -18,7 +18,6 @@ tfr       <- fread(tfr_path)
 age_pattern_path <- sprintf("figures/age_pattern_subnat_recall_%d_length_%d_age_%d.pdf", recall, length, age_bins)
 time_series_path <- sprintf("figures/time_series_subnat_recall_%d_length_%d_age_%d.pdf", recall, length, age_bins)
 
-
 #' Age pattern Plots for national and subnational
 pdf(file = age_pattern_path, height = 13, width = 18)
 for(loc in unique(asfr$STATE)){

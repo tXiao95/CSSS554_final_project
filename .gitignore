@@ -43,3 +43,5 @@ rdhs.json
 packrat/
 packrat/lib*/
 data/prepped/
+.Rproj.user
+packrat/src/

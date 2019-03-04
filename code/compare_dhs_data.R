@@ -14,7 +14,10 @@ asfr    <- fread("data/prepped/asfr_recall_3_length_3_age_5.csv")
 dhsnattfr <- dhsnat[age_start == "TFR"]
 comp1 <- merge(dhsnattfr[, .(SurveyId, Value)], 
                tfr[STATE == "national",.(SurveyId, tfr)], by = "SurveyId")
-ggplot(comp1, aes(Value, tfr)) + geom_text(aes(label = SurveyId)) + geom_abline()
+ggplot(comp1, aes(Value, tfr)) + 
+  #geom_text(aes(label = SurveyId)) + 
+  geom_abline() +
+  geom_point()
 
 #' 2. Compare Subnational TFR
 dhssubtfr <- dhssub[age_start == "TFR"]
