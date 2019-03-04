@@ -5,7 +5,7 @@ home_dir <- "C:/Users/twh42/Documents/UW_Class/CSSS_554/final_project"
 setwd(home_dir)
 
 #' Set parameters
-recall   <- 3
+recall   <- 15
 length   <- 3
 age_bins <- 5
 
@@ -23,17 +23,17 @@ pdf(file = age_pattern_path, height = 13, width = 18)
 for(loc in unique(asfr$STATE)){
   message(loc)
   gg <- ggplot(asfr[STATE == loc], aes((age_start + age_end) / 2, asfr)) + 
-    geom_point(aes(col = SurveyId), alpha = 0.5, size = 3) + 
-    geom_line(aes(col = SurveyId)) + 
-    #geom_errorbarh(aes(xmin = age_start, xmax = age_end, col = SurveyId), height = 0) + 
-    #geom_errorbar(aes(ymin = lower, ymax = upper, col = SurveyId), width = 0) + 
+    geom_point(aes(col = SurveyId), alpha = 0.5, size = 4) + 
+    #geom_line(aes(col = SurveyId)) + 
+    geom_errorbarh(aes(xmin = age_start, xmax = age_end, col = SurveyId), height = 0, size = 1) + 
+    geom_errorbar(aes(ymin = lower, ymax = upper, col = SurveyId), width = 0, size = 1) + 
     facet_wrap(~period_year) + 
     theme_bw(base_size = 25) + 
     xlab("Age") + 
     ylab("ASFR") + 
-    scale_size(range = c(2,10)) + 
     ggtitle(loc) + 
-    guides(size = F)
+    guides(size = F) + 
+    coord_cartesian(ylim = c(0, 0.75)) 
   print(gg)
 }
 dev.off()
@@ -43,12 +43,12 @@ pdf(file = time_series_path, height = 13, width = 18)
 for(loc in unique(asfr$STATE)){
   message(loc)
   gg <- ggplot(asfr[STATE == loc], aes(period_year, asfr)) + 
-    geom_point(aes(col = SurveyId, size = (inverse_variance)), alpha = 0.5) +
-    #geom_errorbar(aes(ymin = lower, ymax = upper, col = SurveyId), width = 0) + 
+    geom_point(aes(col = SurveyId), alpha = 0.5, size = 4) +
+    geom_errorbar(aes(ymin = lower, ymax = upper, col = SurveyId), width = 0, size = 1, alpha = 0.7) + 
     facet_wrap(~age_start) + 
     theme_bw(base_size = 30) + 
     ggtitle(loc) + 
-    scale_size(range = c(2, 10)) + 
+    coord_cartesian(ylim = c(0, 0.75)) + 
     xlab("Year") + 
     ylab("ASFR") + 
     guides(size = F)
