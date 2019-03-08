@@ -13,23 +13,31 @@ shp_path <- "data/NGA/shape_files/2010/shps/"
 recall   <- 3
 length   <- 3
 age_bins <- 5
+sid      <- "NG2013DHS"
 
 #' Read in data
 asfr_path <- sprintf("data/prepped/asfr_recall_%d_length_%d_age_%d.csv", recall, length, age_bins)
 tfr_path  <- sprintf("data/prepped/tfr_recall_%d_length_%d_age_%d.csv", recall, length, age_bins)
-asfr      <- fread(asfr_path)[SurveyId == "NG2013DHS" & STATE != "national"]#; asfr[, inverse_variance :=  1/se^2]
+asfr      <- fread(asfr_path)[SurveyId == sid & STATE != "national"]
 tfr       <- fread(tfr_path)
 
 
 #' Data: ASFR vs. Standard Error 
-ggplot(asfr, aes(asfr, se)) + geom_point(alpha=0.5, aes(color = py), size = 2)
+ggplot(asfr, aes(log(py), se)) + geom_point(alpha=0.5, aes(color = py), size = 2) + xlab("Log of Person-years") + ylab("Standard Error")
 
 #' Model 1: Quasi-Poisson Model
 df <- asfr[]
 model <- glm(nbirths ~ 1 + as.factor(age_start), family = "quasipoisson", data = df, offset = log(py))
+df[, pred := predict(model, df, type = "response")]
+df[, theta := mean(pred / py), by = age_start]
+df <- df[order(age_start, asfr), ]
+df[, index := 1:.N, age_start]
+ggplot(df, aes(index, nbirths/py)) + geom_point(alpha=0.5) + 
+  facet_wrap(~age_start) + geom_hline(aes(yintercept = theta), linetype = "dashed", color = "red", size = 1) + 
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0) + 
+  theme_bw() + xlab("Index of State") + 
+  ylab("ASFR")
 
-df[, pred := predict(model, type = "response")]
-ggplot(df, aes(nbirths/py, pred/py)) + geom_point(alpha=0.5) + geom_abline() + facet_wrap(~age_start)
 
 #' Model 2: Poisson-Gamma Model 
 
@@ -38,7 +46,16 @@ ggplot(df, aes(nbirths/py, pred/py)) + geom_point(alpha=0.5) + geom_abline() + f
 df[,STATEID:=.GRP, by = STATE]
 inla.fit <- inla(nbirths ~ 1 + as.factor(age_start) + f(STATEID, model = "iid"), E = py, data = df[], family = "poisson", control.predictor = list(compute = T))
 df[, inlaest := inla.fit$summary.fitted.values$`0.5quant`]
-ggplot(df, aes(asfr, inlaest)) + geom_point() + geom_abline() + facet_wrap(~age_start)
+df[, inlalower := inla.fit$summary.fitted.values$`0.025quant`]
+df[, inlaupper := inla.fit$summary.fitted.values$`0.975quant`]
+ggplot(df, aes(index, inlaest)) + geom_point(alpha=0.6, color = "blue") + facet_wrap(~age_start) + 
+  geom_hline(aes(yintercept = theta), linetype = "dashed", color = "black", size = 1) + 
+  geom_point(aes(index, nbirths/py), color = "red", alpha=0.6) + 
+  #geom_errorbar(aes(ymin = lower, ymax = upper), color = "red", width = 0, alpha = 0.6) + 
+  geom_errorbar(aes(ymin = inlalower, ymax = inlaupper), color = "blue", width = 0, alpha = 0.6) + 
+  theme_bw() + xlab("Index of State") + ylab("ASFR Estimate")
+
+ggplot(df, aes(asfr, inlaest)) + geom_point(alpha=0.7) + facet_wrap(~age_start) + geom_abline() + theme_bw() + xlab("ASFR") + ylab("INLA")
 
 #' Model 4: Poisson-LogNormal-Spatial Model 
 formula <- nbirths ~ 1 + as.factor(age_start) + f(STATEID, model = "bym2", graph = paste0(shp_path, "nga.graph"),
@@ -48,6 +65,9 @@ formula <- nbirths ~ 1 + as.factor(age_start) + f(STATEID, model = "bym2", graph
 spatial.fit <- inla(formula, data = df, family = "poisson",
                     E = py, verbose = T, control.predictor = list(compute=T))
 df[, spatialest := spatial.fit$summary.fitted.values$`0.5quant`]
+df[, spatiallower := spatial.fit$summary.fitted.values$`0.025quant`]
+df[, spatialupper := spatial.fit$summary.fitted.values$`0.975quant`]
 ggplot(df, aes(asfr, spatialest)) + geom_point() + geom_abline() + facet_wrap(~age_start)
+ggplot(df, aes(inlaest, spatialest)) + geom_point() + geom_abline() + facet_wrap(~age_start)
 
 #' Model 5: Empirical Bayes Model 

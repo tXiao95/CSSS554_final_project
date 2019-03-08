@@ -5,6 +5,7 @@ library(argparse)
 library(magrittr)
 library(readr)
 library(sf)
+library(DHS.rates)
 
 #' Filepaths
 home_dir <- "C:/Users/twh42/Documents/UW_Class/CSSS_554/final_project"
@@ -34,12 +35,14 @@ collapse_asfr <- function(level = "all", br, ir, recall_yr = 3, length_of_period
   #' Checks on arguments
   if (!(class(ir)[1] == "data.table" & class(br)[1] == "data.table")){stop("BR and IR datasets must be data.table")}
   if (!(age_bins %in% c(1, 5))){stop("Only 5-yr or 1-yr intervals allowed")}
-  if (!(level %in% c("all", "admin1"))){stop("Only 'all' or 'admin1' aggregations allowed")}
+  if (!(level %in% c("all", "admin1", "latlong"))){stop("Only 'all' or 'admin1' or 'latlong' aggregations allowed")}
   
   if(level == "all"){
     id.vars <- c("age", "period", "SurveyId")
   } else if(level == "admin1"){
     id.vars <- c("age", "period", "SurveyId", "STATE")
+  } else if(level == "latlong"){
+    id.vars <- c("age", "period", "SurveyId", "LATNUM", "LONGNUM")
   }
   
   ####### NUMERATOR ##################
@@ -146,12 +149,15 @@ gps <- readRDS(paste0("data/prepped/gps.rds"))[[4]]
 br <- impute_lat_long(br, shp_path)
 ir <- impute_lat_long(ir, shp_path)
 
+readr::write_csv(br, paste0("data/prepped/birth_lat_long_imputed.csv"))
+readr::write_csv(ir, paste0("data/prepped/women_lat_long_imputed.csv"))
+
 # Mismatches b/w shapefile and DHS Survey
 #merge(br_admin[!is.na(ADM1NAME) & !is.na(STATE) & ADM1NAME != STATE,.N,.(id, CLUSTER, SEC, SurveyId)], gps_short, by = "SEC")
 #merge(br_admin[is.na(STATE),.N,.(CLUSTER,ALT_DEM, SEC, SurveyId)], gps_short, by = "SEC")
 
 #' DHS uses recall of 3, length of period of 3, and age intervals of 5 yrs
-recall_yr           <- 3
+recall_yr           <- 15
 length_of_period_yr <- 3
 age_bins            <- 5
 filename_asfr       <- sprintf("asfr_recall_%d_length_%d_age_%d.csv", 
@@ -161,6 +167,8 @@ filename_tfr        <- sprintf("tfr_recall_%d_length_%d_age_%d.csv",
 
 df <- rbindlist(lapply(c("all", "admin1"), collapse_asfr, br, ir, recall_yr, length_of_period_yr, age_bins), fill = T)
 df[is.na(STATE), STATE := "national"]
+
+lat <- collapse_asfr(level = "latlong", br, ir, recall_yr = recall_yr, length_of_period_yr = length_of_period_yr, age_bins = age_bins)
 
 tfr <- df[,.(tfr = 5 * sum(asfr), 
              age_start = min(age_start), 

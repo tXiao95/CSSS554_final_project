@@ -12,7 +12,7 @@ age_bins <- 5
 #' Read in data
 asfr_path <- sprintf("data/prepped/asfr_recall_%d_length_%d_age_%d.csv", recall, length, age_bins)
 tfr_path  <- sprintf("data/prepped/tfr_recall_%d_length_%d_age_%d.csv", recall, length, age_bins)
-asfr      <- fread(asfr_path); asfr[, inverse_variance :=  1/se^2]
+asfr      <- fread(asfr_path)
 tfr       <- fread(tfr_path)
 
 age_pattern_path <- sprintf("figures/age_pattern_subnat_recall_%d_length_%d_age_%d.pdf", recall, length, age_bins)
