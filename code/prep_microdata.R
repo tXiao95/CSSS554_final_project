@@ -51,11 +51,11 @@ ir <- rdhs::search_variables(ir_dfs$FileName, variables = nec_var, reformat = T)
       rdhs::extract_dhs(add_geo = T) %>%
       data.table::rbindlist(fill = T)
 
-# gps <- (lapply(gps_dfs$FileName, function(x){
-#   x <- gsub("ZIP|zip", "rds", x)
-#   df <- readRDS(paste0("data/NGA/datasets/", x))
-#   df
-# }))
+gps <- (lapply(gps_dfs$FileName, function(x){
+  x <- gsub("ZIP|zip", "rds", x)
+  df <- readRDS(paste0("data/NGA/datasets/", x))
+  df
+}))
 
 #' Standardize Admin1 State names
 # br[, ADM1NAME := ifelse(ADM1NAME == "NULL", NA, ADM1NAME)]
@@ -71,8 +71,9 @@ names(ir)[names(ir) %in% var_map$short] <- var_map[short %in% names(ir),full]
 id.vars <- names(ir) %>% setdiff(b)
 
 #' Create births data from the IR data
-br <- melt.data.table(ir, id.vars = id.vars, meausure.vars = b, variable.name = "kidnum", value.name = "cmc_birth", na.rm=T)
+br <- melt.data.table(ir, id.vars = id.vars, measure.vars = b, variable.name = "kidnum", value.name = "cmc_birth", na.rm=T)
 
+#' Write Data 
 readr::write_csv(br, paste0(outdir, "birth_recode.csv"))
 readr::write_csv(ir, paste0(outdir, "women_recode.csv"))
 saveRDS(gps, paste0(outdir, "gps.rds"))

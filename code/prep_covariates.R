@@ -18,10 +18,11 @@ tagid <- tags[TagName == "Fertility Rates", TagID]
 ind    <- rdhs::dhs_indicators()
 
 
-ind[grepl("education", Definition)]
-ind[grepl("contraception", Definition)]
-ind[grepl("religion", Definition)]
-ind[grepl("labor", Definition)]
+edu_id <- ind[grepl("education", Definition)][10]$IndicatorId
+metneed_id <- ind[grepl("contraception", Definition)][42]$IndicatorId
+ind[grepl("religion", Definition), .(Label, Definition)]
+ind[grepl("labor", Definition), .(Label, Definition)]
+ind[grepl("marriage", Definition)]
 
 
 ind_id <- ind[1:9,.(IndicatorId, Definition)]$IndicatorId
@@ -31,3 +32,12 @@ dhs_subnat <- dhs_data(tagIds = tagid,
                        surveyYearStart = 1970, 
                        breakdown = "subnational", 
                        indicatorIds = ind_id)[IndicatorId %in% ind_id] %>% data.table
+
+dhs_subnat <- dhs_data( countryIds = "NG", 
+                       surveyYearStart = 1970, 
+                       breakdown = "subnational", 
+                       indicatorIds = edu_id)[IndicatorId %in% edu_id] %>% data.table
+metneed <- dhs_data( countryIds = "NG", 
+                        surveyYearStart = 1970, 
+                        breakdown = "subnational", 
+                        indicatorIds = metneed_id)#[IndicatorId %in% metneed_id] %>% data.table
