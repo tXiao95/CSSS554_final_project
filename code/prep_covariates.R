@@ -19,10 +19,7 @@ ind    <- rdhs::dhs_indicators()
 
 
 edu_id <- ind[grepl("education", Definition)][10]$IndicatorId
-metneed_id <- ind[grepl("contraception", Definition)][42]$IndicatorId
-ind[grepl("religion", Definition), .(Label, Definition)]
-ind[grepl("labor", Definition), .(Label, Definition)]
-ind[grepl("marriage", Definition)]
+metneed_id <- ind[grepl("unmet", Definition)][3]$IndicatorId
 
 
 ind_id <- ind[1:9,.(IndicatorId, Definition)]$IndicatorId
@@ -41,3 +38,5 @@ metneed <- dhs_data( countryIds = "NG",
                         surveyYearStart = 1970, 
                         breakdown = "subnational", 
                         indicatorIds = metneed_id)#[IndicatorId %in% metneed_id] %>% data.table
+
+

@@ -1,0 +1,66 @@
+---
+title: "Small area estimation of age-specific fertility in Nigeria: "
+author: "Thomas Hsiao"
+date: "3/12/2019"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(data.table)
+library(ggplot2)
+```
+
+# Introduction
+
+The age-specific fertility rate (ASFR) is defined as the number of births occurring during a reference period per 1000 women years of reproductive age for a given age group. The more commonly used aggregate measure of fertility, the total fertility rate (TFR), is defined as the average number of children born per woman if she were part of the hypothetical cohort that would experience the current schedule of ASFR's for a reference period. The development of fertility rates in Sub-Saharan Africa (SSA) is of special interest to demographers and policy planners, due to the region's importance to future population projections. Fertility has been shown to follow a reverse sigmoid curve and is often classified into three phases: a stable high fertility phase, a fertility decline or transition, and a stable low fertility phase. A majority of SSA countries are either still in the high fertility phase, or have just begun an unprecedentedly slow decline. Current population projections from the United Nation's most recent projections, the World Population Projections 2017 (WPP) have slow declines in fertility in SSA being the main driver of explosive population growth up to 2100, where the total population is projected to be at 11.2 billion, compared to 7.2 billion now. 
+
+Nigeria's demographic future is key to understanding how the SSA population will develop. The small western African country accounts for approximately 15% of the total population on the African continent, of the . TFR in Nigeria has observed an extremely slow decline and remains elevated at 5.53 as of 2016 (World Bank), while still at 6.11 in 2000, over 15 years ago. In contrast, Ethiopian TFR has declined from 6.53 to 4.20 in the same span of time. 
+
+Heterogeneity of common health indicators along regional and ethnic divides has been well-documented in Nigeria. There exists no ethnic majority in Nigeria. The Muslim Hausa-Fulani people occupy the north, while the predominantly Christian Yoruba and Igbo people reside in the southwest and southeast respectively. Understanding the variation within Nigeria can give a better idea as to why fertility remains elevated for the country as a whole. 
+
+The Demographic Health Survey (DHS) series offers a robust source of fertility data in developing countries. The UN Population Division (UNPD) and the Institute for Health Metrics and Evaluation (IHME), two research groups that estimate global demographic trends worldwide, rely heavily on DHS data to inform fertility schedules dating back to the 1990's. 
+
+The goal of this analysis is to apply small area estimation to the age-specific fertility rates of the 2013 Nigeria DHS survey to obtain smoothed fertility estimates and identify spatial heterogeneity at the admin 2 level (37 total subnational units). Special attention is paid to what proportion of the variance can be explained by the spatially-related effects, after taking into account the fixed covariates of female education and met need for contraception.   
+
+# Data
+
+This analysis makes use of the 2013 Nigerian DHS survey to get a picture of current fertility levels. While a more recent 2015 Malaria Indicators Survey (MIS, a child survey series of the DHS) is available, the 2013 survey has a greater sample size of women of 38,948 and more stable measurements of current fertility at the admin 2 level. The 2015 survey only had 8,034 women, and had some strange issues. For example the maximum children ever born (CEB) in the dataset was five, in contrast to eighteen observed in both the 2008 and 2013 DHS surveys, which did not seem accurate for a high-fertility country like Nigeria. 
+
+ASFR can be computed from DHS surveys through post-processing of the data which is presented in the complete birth history (CBH) data. CBH data is a form of fertility data where the DOB of every child each woman respondent has given birth to is known. This is in contrast to the less informative summary birth history data (SBH), where it is only known how many children the woman respondent has ever given birth to, with no information on when each of those children were born. Through this method, the survey weights and design are propagated through to the model by way of the computed births and women-years in each of the 37 subnational units. 
+
+DHS surveys are conducted in a two-stage cluster sample, and as such report sampling weights for each respondent. These weights were used when computing 
+
+The 2013 Nigerian DHS dataset contains 38,938 women and 119,389 recorded births. Extracted data included the DOB of each woman respondent, the DOB of each reported birth, the woman's individual sampling weight, the date of the interview, the GPS coordinates of each woman's interview, whether the sample was an ever-married sample and the corresponding all-woman factor. Since the survey was not an ever-married sample, no all-woman factor was required to adjust the data to apply toward the general population of all Nigerian women. 
+
+No bias adjustment was performed on the data. This is due mostly to the fact that the dataset was analyzed in isolation, so any observed systematic biases compared to other surveys was not possible. In fertility data processing, it is well known that women tend to undercount their children as recall increases. This is addressed by limiting the estimation period of ASFR to the three years preceding the interview date. 
+
+In 2013, Nigeria consisted of six geopolitical zones and 37 states, including one federal capital territory - FCT Abuja. This analysis only takes into account the admin 2 level of 37 states. 
+
+# Methods 
+
+A Bayesian spatial smoothing model was applied to each of the age-specific fertility rates in the five-year age groups within 15-49. For each age group, the model follows the Poisson-Lognormal Spatial model below
+
+$$
+\begin{center}
+B|\beta_0,S_i,\epsilon_i \sim Pois(Ee^{\beta_0+S_i+\epsilon_i}) \\
+\beta_0 \sim N(0, \infty) \\
+S_i|\sigma^2_s \sim ICAR(\sigma^2_s) \\
+\epsilon_i|\sigma^2_\epsilon \sim N(0, \sigma^2_\epsilon)\\
+\end{center}
+$$
+
+Where $B$ represents the number of births, $E$ is women-years, $i$ refers to a specific admin 2 state, $S_i$ denotes a spatial random effect, $\epsilon_i$ represents a non-spatial error term, and $\beta_0$ is the overall mean. A severe limitation of the model is the lack of covariates available in DHS. 
+
+# Results 
+
+A standard map of the raw TFR makes obvious the massive heterogeneity in fertility within Nigeria. TFR ranges from 3.4 in the ____ to 9. in ______ in the north. A clear divide between the north and south can be seen as well. Certain outliers. These states are what to pay attention to when plotting the ICAR model. 
+
+The model without spatial effects. 
+
+# Conclusion
+
+Despite a large sample size and denominators in the raw ASFR data, there were several . While no covariates were used that might have been able to explain some of the more peculiar non-smooth spatial observations, such as XXX, the spatial smoothing from the Bayesian ICAR model gave a more reasonable set of spatially smooth estimates of fertility. Massive heterogeneity exists between the 37 admin 2 subnational units, implying the high fertility observed in Nigeria is driven by the northern states occupied predominantly by the Hausa-Fulani. 

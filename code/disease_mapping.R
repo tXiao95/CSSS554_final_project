@@ -13,7 +13,7 @@ shp_path <- "data/NGA/shape_files/2010/shps/"
 recall   <- 3
 length   <- 3
 age_bins <- 5
-sid      <- "NG2008DHS"
+sid      <- "NG2013DHS"
 
 #' Read in data
 asfr_path <- sprintf("data/prepped/asfr_recall_%d_length_%d_age_%d.csv", recall, length, age_bins)
@@ -37,18 +37,12 @@ ggplot(df, aes(index, nbirths/py)) + geom_point(alpha=0.5) +
   theme_bw() + xlab("Index of State") + 
   ylab("ASFR")
 
-#' Model 3: Poisson-LogNormal Model - Age fixed effect 
-df[,STATEID:=.GRP, by = STATE]
-inla.fit <- inla(nbirths ~ 1 + as.factor(age_start) + f(STATEID, model = "iid"), E = py, data = df[], family = "poisson", control.predictor = list(compute = T))
-df[, inlaest := inla.fit$summary.fitted.values$`0.5quant`]
-df[, inlalower := inla.fit$summary.fitted.values$`0.025quant`]
-df[, inlaupper := inla.fit$summary.fitted.values$`0.975quant`]
-ggplot(df, aes(index, inlaest)) + geom_point(alpha=0.6, color = "blue") + facet_wrap(~age_start) + 
-  geom_hline(aes(yintercept = theta), linetype = "dashed", color = "black", size = 1) + 
-  geom_point(aes(index, nbirths/py), color = "red", alpha=0.6) + 
-  #geom_errorbar(aes(ymin = lower, ymax = upper), color = "red", width = 0, alpha = 0.6) + 
-  geom_errorbar(aes(ymin = inlalower, ymax = inlaupper), color = "blue", width = 0, alpha = 0.6) + 
-  theme_bw() + xlab("Index of State") + ylab("ASFR Estimate")
+ggplot(df, aes(age_start, asfr)) + 
+  geom_point() + 
+  #geom_line() + 
+  geom_point(aes(x = age_start, y = theta), color = "red") + 
+  geom_line(aes(x = age_start, y = theta), color = "red") #+ 
+  facet_wrap(~STATE)
 
 #' Model 3: Poisson-LogNormal Model - Separate Age Groups
 df[,STATEID:=.GRP, by = STATE]
@@ -64,10 +58,10 @@ ggplot(dt, aes(index, inlaest)) + geom_point(alpha=0.6, color = "blue") + facet_
   geom_errorbar(aes(ymin = inlalower, ymax = inlaupper), color = "blue", width = 0, alpha = 0.6) + 
   theme_bw() + xlab("Index of State") + ylab("ASFR Estimate")
 
-ggplot(df, aes(asfr, inlaest)) + geom_point(alpha=0.7) + facet_wrap(~age_start) + geom_abline() + theme_bw() + xlab("ASFR") + ylab("INLA")
+#ggplot(df, aes(asfr, inlaest)) + geom_point(alpha=0.7) + facet_wrap(~age_start) + geom_abline() + theme_bw() + xlab("ASFR") + ylab("INLA")
 
 #' Model 4: Poisson-LogNormal-Spatial Model 
-formula <- nbirths ~ 1 + as.factor(age_start) + f(STATEID, model = "bym2", graph = paste0(shp_path, "nga.graph"),
+formula <- nbirths ~ 1 + f(STATEID, model = "bym2", graph = paste0(shp_path, "nga.graph"),
                        scale.model = T, constr = T,
                        hyper = list(phi=list(prior="pc", param=c(0.5, 0.5), initial = 1),
                                     prec = list(prior="pc.prec", param = c(0.3, 0.01), initial = 5)))
