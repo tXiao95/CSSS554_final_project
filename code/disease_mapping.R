@@ -49,7 +49,7 @@ asfr[, time.space := paste0(time.struct,"_", state.struct)]
 
 # 1. Fit Separate Models by age: 15-19, 20-24, 25-29, 30-34, and 35-39
 # 2. INLA Poisson Lognormal Spatial ICAR model - Besag and IID
-# 3. INLA Poisson Lognormal Spatial ICAR model - Besage and IID and RW1
+# 3. INLA Poisson Lognormal Spatial ICAR model - Besage and IID and RW2
 # 4. INLA Poisson Lognormal Spatial ICAR model with 
 
 fit_age_specific_inla <- function(asfr, age){
@@ -82,7 +82,7 @@ fit_age_specific_inla <- function(asfr, age){
   formula <- nbirths ~ 1 + 
     f(state.struct, model = "besag", hyper = list(prec=list(prior="loggamma", param=c(a.icar, b.icar))), graph = paste0(shp_path, "nga.graph")) + 
     f(state.unstruct, model = "iid", hyper = list(prec=list(prior="loggamma",param=c(a.iid,b.iid),initial=1))) +
-    f(time.struct, model = "rw1", hyper = list(prec=list(prior="pc.prec",param=c(a.rw, b.rw)))) +
+    f(time.struct, model = "rw2", hyper = list(prec=list(prior="pc.prec",param=c(a.rw, b.rw)))) +
     f(time.unstruct, model = "iid", hyper = list(prec=list(prior="loggamma",param=c(a.iid,b.iid),initial=1))) + 
     f(time.space, model = "iid", hyper = list(prec=list(prior="loggamma",param=c(a.iid,b.iid),initial=1)))
   
@@ -111,14 +111,97 @@ for (i in 1:length(all_ages)){
   final_df[[i]] <- obj$df
 }
 
-lapply(names(fits), function(x) fits$x$summary.fixed)
-
 final_df <- rbindlist(final_df)
 final_df[, c("inlaest_thous", "inlalower_thous", "inlaupper_thous") := lapply(.SD, function(x) round(1000*x)),
          .SDcols = c("inlaest", "inlalower", "inlaupper")]
 
-inla.fit$marginals.random$state.struct
+########### PROPORTION OF VARIANCE AND VARIANCE SUMMARIES FOR EACH COMPONENT #################################
+nareas <- 37
+nperiods <- 6
+index <- 1
 
+create.prop.var.table <- function(index, fits, nareas = 37, nperiods = 6){
+  message(index)
+  all_ages <- seq(15, 45, 5)
+  mat.marg.icar <- matrix(NA, nrow = nareas, ncol = 1000)
+  mat.marg.rw <- matrix(NA, nrow = nperiods, ncol = 1000)
+  m <- fits[[index]]$marginals.random$state.struct
+  t <- fits[[index]]$marginals.random$time.struct
+  for (i in 1:nareas) {
+    Sre <- m[[i]]
+    mat.marg.icar[i, ] <- inla.rmarginal(1000, Sre)
+  }
+  for (i in 1:nperiods){
+    Tre <- t[[i]]
+    mat.marg.rw[i, ] <- inla.rmarginal(1000, Tre)
+  }
+  var.state.struct <- apply(mat.marg.icar, 2, var)
+  var.time.struct <- apply(mat.marg.rw, 2, var)
+  var.state.unstruct <- inla.rmarginal(1000, inla.tmarginal(function(x) 1/x, fits[[index]]$marginals.hyper$"Precision for state.unstruct"))
+  var.time.unstruct <- inla.rmarginal(1000, inla.tmarginal(function(x) 1/x, fits[[index]]$marginals.hyper$"Precision for time.unstruct"))
+  var.timespace <- inla.rmarginal(1000, inla.tmarginal(function(x) 1/x, fits[[index]]$marginals.hyper$"Precision for time.space"))
+  
+  data.table(`Age Group` = all_ages[index],
+             `Spatial Structure` = median(var.state.struct),
+             `Spatial Unstructure` = median(var.state.unstruct),
+             `Time Structure` = median(var.time.struct),
+             `Time Unstructure` = median(var.time.unstruct),
+             `Space-Time` = median(var.time.space))
+  
+  total.var <- var.state.struct + var.time.struct + var.state.unstruct + var.time.unstruct + var.timespace
+  perc.var.state.struct <- mean(var.state.struct/total.var)
+  perc.var.state.unstruct <- mean(var.state.unstruct/total.var)
+  perc.var.time.struct <- mean(var.time.struct/total.var)
+  perc.var.time.unstruct <- mean(var.time.unstruct/total.var)
+  perc.var.time.space <- mean(var.timespace/total.var)
+  
+  data.table(`Age Group` = all_ages[index], 
+             `Spatial Structure` = perc.var.state.struct, 
+             `Spatial Unstructure` = perc.var.state.unstruct, 
+             `Time Structure` = perc.var.time.struct, 
+             `Time Unstructure` = perc.var.time.unstruct, 
+             `Space-Time` = perc.var.time.space)
+}
+
+create.var.sum.table <- function(index, fits, nareas = 37, nperiods = 6){
+  message(index)
+  all_ages <- seq(15, 45, 5)
+  mat.marg.icar <- matrix(NA, nrow = nareas, ncol = 1000)
+  mat.marg.rw <- matrix(NA, nrow = nperiods, ncol = 1000)
+  m <- fits[[index]]$marginals.random$state.struct
+  t <- fits[[index]]$marginals.random$time.struct
+  for (i in 1:nareas) {
+    Sre <- m[[i]]
+    mat.marg.icar[i, ] <- inla.rmarginal(1000, Sre)
+  }
+  for (i in 1:nperiods){
+    Tre <- t[[i]]
+    mat.marg.rw[i, ] <- inla.rmarginal(1000, Tre)
+  }
+  var.state.struct <- apply(mat.marg.icar, 2, var)
+  var.time.struct <- apply(mat.marg.rw, 2, var)
+  var.state.unstruct <- inla.rmarginal(1000, inla.tmarginal(function(x) 1/x, fits[[index]]$marginals.hyper$"Precision for state.unstruct"))
+  var.time.unstruct <- inla.rmarginal(1000, inla.tmarginal(function(x) 1/x, fits[[index]]$marginals.hyper$"Precision for time.unstruct"))
+  var.timespace <- inla.rmarginal(1000, inla.tmarginal(function(x) 1/x, fits[[index]]$marginals.hyper$"Precision for time.space"))
+  
+  data.table(`Age Group` = all_ages[index],
+             `Spatial Structure` = paste0(round(median(var.state.struct), 3), " (",round(quantile(var.state.struct, c(0.025)),3),"-",round(quantile(var.state.struct, prob = c(0.975)),3), ")"),
+             `Spatial Unstructure` = paste0(round(median(var.state.unstruct), 3), " (",round(quantile(var.state.unstruct, c(0.025)), 3),"-",round(quantile(var.state.unstruct, c(0.975)),3), ")"),
+             `Time Structure` = paste0(round(median(var.time.struct), 3), " (",round(quantile(var.time.struct, c(0.025)), 3),"-",round(quantile(var.time.struct, c(0.975)),3), ")"),
+             `Time Unstructure` = paste0(round(median(var.time.unstruct), 3), " (",round(quantile(var.time.unstruct, c(0.025)), 3),"-",round(quantile(var.time.unstruct, c(0.975)),3), ")"),
+             `Space-Time` = paste0(round(median(var.timespace), 3), " (",round(quantile(var.timespace, c(0.025)), 3),"-",round(quantile(var.timespace, c(0.975)),3), ")"))
+}
+
+# Just create table for 15-44 - Proportion of Total Variance
+prop.var.table <- rbindlist(lapply(1:6, create.prop.var.table, fits = fits))
+prop.var.table %>% View
+prop.var.table[, `Age Group` := paste0(`Age Group`, "-", `Age Group` + 4)]
+write_csv(prop.var.table, paste0(plot_path, "/prop_var_table.csv"))
+
+# Just create table for 15-44 - Variance Summaries
+var.sum.table <- rbindlist(lapply(1:6, create.var.sum.table, fits = fits))
+var.sum.table[, `Age Group` := paste0(`Age Group`, "-", `Age Group` + 4)]
+write_csv(var.sum.table, paste0(plot_path, "/var_sum_table.csv"))
 
 ############# FIGURES AND TABLES FOR REPORT ###################################
 plot_path <- "report/plots/"
@@ -127,31 +210,35 @@ pdf(paste0(plot_path, "inlaest_and_data_loc_specific_yfixed.pdf"), width = 12, h
 for(state in unique(final_df$STATE)){
   message(state)
   gg <- ggplot(final_df[STATE == state & age_start != 45], aes(as.factor(time_period), (asfr))) + 
-    geom_point(aes(color = SurveyId)) + 
-    geom_line(aes(color = SurveyId, group = SurveyId)) + 
-    geom_line(aes(as.factor(time_period), (inlaest), group = age_start), color = "blue") + 
-    geom_ribbon(aes(ymin = (inlalower), ymax = (inlaupper), group = age_start), fill = "blue", alpha = 0.2) + 
+    geom_pointrange(aes(color = SurveyId, ymin=lower, ymax=upper), position = position_jitter(), alpha = 0.5) + 
+    #geom_errorbar(aes(ymin = lower, ymax = upper, color = SurveyId), width = 0, position = position_jitterdodge()) + 
+    #geom_line(aes(color = SurveyId, group = SurveyId), linetype = "dashed") + 
+    geom_point(aes(as.factor(time_period), (inlaest), group = age_start), color = "black", size=2) + 
+    geom_errorbar(aes(ymin=inlalower, ymax = inlaupper, group = age_start), color = "black", width = 0, size = 1) +
+    geom_line(aes(as.factor(time_period), inlaest, group = age_start), linetype = "dashed") + 
+    #geom_ribbon(aes(ymin = (inlalower), ymax = (inlaupper), group = age_start), fill = "blue", alpha = 0.2) + 
     theme_classic() + 
     facet_wrap(~age_start) + 
     scale_x_discrete(labels = unique(asfr$time_period_short)) + 
     xlab("Time") + 
     ylab("ASFR") + 
     ggtitle(toupper(state)) + 
-    coord_cartesian(ylim = c(0, 0.45))
+    coord_cartesian(ylim = c(0, 0.3)) + 
+    labs(x=NULL, y=NULL)
   print(gg)
 }
 dev.off()
 
-# Maps of each groups estimate
+# Maps of each age groups estimate
 map    <- rgdal::readOGR(dsn = paste0(shp_path, "sdr_subnational_boundaries2.shp"))
 map_df <- data.table(broom::tidy(map, region = "REGNAME"))
-
 map_df <- merge(map_df, final_df[,.(STATE, age_start, time_period, time_period_short, inlaest_thous)], 
                 by.x = "id", by.y = "STATE", allow.cartesian = T)
 
-pdf(paste0(plot_path, "inlaest_maps.pdf"), width = 11.5, height = 8)
 for(a in unique(final_df$age_start)){
+  
   message(a)
+  pdf(paste0(plot_path, "inlaest_maps_asfr_",a,".pdf"), width = 11.5, height = 8)
   gg <- ggplot() + 
     geom_polygon(data = map_df[age_start == a], aes(x = long, y = lat, group = group, fill = inlaest_thous), color = 'black', size = .2) + 
     #theme_void() + 
@@ -162,5 +249,36 @@ for(a in unique(final_df$age_start)){
     scale_fill_distiller(type = "div", palette = "RdYlBu", name = "ASFR (per 1000)") + 
     theme_classic()
   print(gg)
+  dev.off()
 }
+
+
+########## TFR MAP #############
+tfr <- final_df[, .(asfr = mean(inlaest)), by = .(STATE, time_period, age_start)]
+tfr <- tfr[, .(tfr = 5 * sum(asfr), num_age_groups = .N), by = .(time_period, STATE)]
+#tfr <- tfr[num_age_groups >= 6]
+
+map    <- rgdal::readOGR(dsn = paste0(shp_path, "sdr_subnational_boundaries2.shp"))
+map_df <- data.table(broom::tidy(map, region = "REGNAME"))
+map_df <- merge(map_df, tfr[,.(STATE, time_period, tfr)], 
+                by.x = "id", by.y = "STATE", allow.cartesian = T)
+
+pdf(paste0(plot_path, "inlaest_maps_tfr.pdf"), width = 11.5, height = 8)
+  gg <- ggplot() + 
+    geom_polygon(data = map_df, aes(x = long, y = lat, group = group, fill = tfr), color = 'black', size = .2) + 
+    #theme_void() + 
+    ggtitle(paste0("Nigeria TFR")) + 
+    coord_quickmap() + 
+    facet_wrap(~time_period) + 
+    #scale_fill_gradient(low = "blue", high = "yellow") + 
+    scale_fill_distiller(type = "div", palette = "RdYlBu", name = "TFR") + 
+    theme_classic()
+  print(gg)
 dev.off()
+
+############ SCATTER OF SHRINKAGE #############
+ggplot(final_df[age_start == 15], aes(asfr, inlaest)) + 
+  geom_point(alpha=0.5) + 
+  facet_wrap(~age_start) + 
+  geom_abline(color = "red") + 
+  coord_cartesian(xlim = c(0, 0.5), ylim = c(0, 0.5))
